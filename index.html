@@ -148,7 +148,7 @@
     <h1>Find the sound in the word</h1>
     <div class="score" id="score">Score: 0 / 0 • Streak: 0</div>
 
-    <button class="play" onclick="playSound()">▶ Play sound</button>
+    <button id="playBtn" class="play" onclick="playSound()">▶ Play sound</button>
 
     <div class="message" id="message">
       Tap play, then choose the word with the sound.
@@ -224,7 +224,12 @@
       } catch (e) {}
       currentAudio = null;
     }
-
+  function disablePlayBriefly(ms = 450) {
+    const btn = document.getElementById("playBtn");
+    if (!btn) return;
+    btn.disabled = true;
+    setTimeout(() => { btn.disabled = false; }, ms);
+  }
     function newRound() {
       locked = false;
       roundId++;
@@ -259,20 +264,63 @@
     }
 
     function playSound() {
-      const myRound = roundId; // capture current round
+  const myRound = roundId;
 
-      const candidates = [
-        `audio/${answerSound}.mp3`,
-        `audio/${answerSound}.m4a`,
-        `audio/${answerSound}.mp4`,
-        `Audio/${answerSound}.mp3`,
-        `Audio/${answerSound}.m4a`,
-        `Audio/${answerSound}.mp4`,
-      ];
+  const candidates = [
+    `audio/${answerSound}.mp3`,
+    `audio/${answerSound}.m4a`,
+    `audio/${answerSound}.mp4`,
+    `Audio/${answerSound}.mp3`,
+    `Audio/${answerSound}.m4a`,
+    `Audio/${answerSound}.mp4`,
+  ];
 
-      // Stop/reset anything already playing
-      stopAnyAudio();
+  stopAnyAudio();
 
+  let idx = 0;
+  const audio = new Audio();
+  audio.preload = "auto";
+  currentAudio = audio;
+
+  let gaveUp = false;
+
+  const tryCandidate = () => {
+    if (myRound !== roundId || gaveUp) return;
+    audio.src = candidates[idx];
+    audio.load();
+
+    // Try playing; if it fails due to a transient issue, we'll try next.
+    audio.play().catch(() => {
+      // On some devices play() can reject even for valid files if tapped too fast.
+      // We'll treat it like a transient failure and try the next candidate.
+      idx++;
+      if (idx < candidates.length) tryCandidate();
+      else scheduleMissingAlert();
+    });
+  };
+
+  const scheduleMissingAlert = () => {
+    // Delay the alert slightly to avoid false alarms during rapid taps/loading.
+    if (gaveUp) return;
+    gaveUp = true;
+
+    setTimeout(() => {
+      if (myRound !== roundId) return;
+      alert(`No sound for: ${answerSound}`);
+    }, 250);
+  };
+
+  audio.addEventListener("error", () => {
+    idx++;
+    if (idx < candidates.length) {
+      tryCandidate();
+    } else {
+      scheduleMissingAlert();
+    }
+  });
+
+  tryCandidate();
+}
       let idx = 0;
       const audio = new Audio();
       audio.preload = "auto";
@@ -355,3 +403,4 @@
 
 </body>
 </html>
+
