@@ -1,337 +1,357 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Find the Sound</title>
-<style>
-body {
-  font-family: -apple-system, system-ui, sans-serif;
-  background: #f4f7fb;
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-}
-.card {
-  background: white;
-  max-width: 420px;
-  width: 100%;
-  border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-h1 { margin: 0 0 10px; }
-button {
-  border-radius: 14px;
-  border: none;
-  padding: 18px;
-  font-size: 22px;
-  font-weight: bold;
-  margin: 6px 0;
-}
-.play { background: #0ea5e9; color: white; }
-.option { background: white; border: 2px solid #ddd; }
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-.message {
-  background: #eef2f7;
-  padding: 10px;
-  border-radius: 12px;
-  margin: 10px 0;
-}
-.score { font-size: 14px; color: #555; }
-  /* highlight the target grapheme */
-.hl {
-  background: #fff3a3;
-  border-radius: 8px;
-  padding: 0 4px;
-}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <title>Find the Sound</title>
 
-/* feedback borders */
-.correct {
-  border: 3px solid #16a34a !important;
-}
-.wrong {
-  border: 3px solid #dc2626 !important;
-  opacity: 0.9;
-}
+  <style>
+    body {
+      font-family: -apple-system, system-ui, sans-serif;
+      background: #f4f7fb;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      margin: 0;
+    }
 
-/* celebration overlay */
-#celebration {
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 23, 42, 0.6);
-  z-index: 9999;
-}
+    .card {
+      background: white;
+      max-width: 520px;
+      width: 100%;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
 
-.celebrate-card {
-  width: min(520px, 92vw);
-  background: white;
-  border-radius: 18px;
-  padding: 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-  text-align: center;
-}
+    h1 { margin: 0 0 10px; }
 
-.donkey-stage {
-  position: relative;
-  height: 120px;
-  overflow: hidden;
-  border-radius: 14px;
-  background: linear-gradient(#e0f2fe, #f8fafc);
-  border: 1px solid #e2e8f0;
-  margin-top: 10px;
-}
+    button {
+      border-radius: 14px;
+      border: none;
+      padding: 18px;
+      font-size: 22px;
+      font-weight: 800;
+      margin: 6px 0;
+      touch-action: manipulation;
+    }
 
-.donkey {
-  position: absolute;
-  left: -20%;
-  top: 40px;
-  font-size: 54px;
-  animation: moonwalk 1.8s ease-in-out infinite;
-  transform: scaleX(-1); /* moonwalk vibe */
-}
+    .play { background: #0ea5e9; color: white; width: 100%; }
 
-.stars {
-  font-size: 22px;
-  margin-top: 8px;
-  animation: pop 0.9s ease-in-out infinite;
-}
+    .option { background: white; border: 2px solid #ddd; width: 100%; }
 
-@keyframes moonwalk {
-  0%   { transform: translateX(0) scaleX(-1) rotate(0deg); }
-  50%  { transform: translateX(140%) scaleX(-1) rotate(-6deg); }
-  100% { transform: translateX(280%) scaleX(-1) rotate(0deg); }
-}
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
 
-@keyframes pop {
-  0%,100% { transform: scale(1); }
-  50%     { transform: scale(1.12); }
-}
-</style>
+    .message {
+      background: #eef2f7;
+      padding: 10px;
+      border-radius: 12px;
+      margin: 10px 0;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+
+    .score { font-size: 14px; color: #555; }
+
+    /* highlight the target grapheme */
+    .hl {
+      background: #fff3a3;
+      border-radius: 8px;
+      padding: 0 4px;
+    }
+
+    /* feedback borders */
+    .correct { border: 3px solid #16a34a !important; }
+    .wrong { border: 3px solid #dc2626 !important; opacity: 0.9; }
+
+    /* celebration overlay */
+    #celebration {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.6);
+      z-index: 9999;
+    }
+
+    .celebrate-card {
+      width: min(520px, 92vw);
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      text-align: centre;
+    }
+
+    .donkey-stage {
+      position: relative;
+      height: 120px;
+      overflow: hidden;
+      border-radius: 14px;
+      background: linear-gradient(#e0f2fe, #f8fafc);
+      border: 1px solid #e2e8f0;
+      margin-top: 10px;
+    }
+
+    .donkey {
+      position: absolute;
+      left: -20%;
+      top: 40px;
+      font-size: 54px;
+      animation: moonwalk 1.8s ease-in-out infinite;
+      transform: scaleX(-1); /* moonwalk vibe */
+    }
+
+    .stars {
+      font-size: 22px;
+      margin-top: 8px;
+      animation: pop 0.9s ease-in-out infinite;
+    }
+
+    @keyframes moonwalk {
+      0%   { transform: translateX(0) scaleX(-1) rotate(0deg); }
+      50%  { transform: translateX(140%) scaleX(-1) rotate(-6deg); }
+      100% { transform: translateX(280%) scaleX(-1) rotate(0deg); }
+    }
+
+    @keyframes pop {
+      0%,100% { transform: scale(1); }
+      50%     { transform: scale(1.12); }
+    }
+  </style>
 </head>
-  <div id="celebration" onclick="hideCelebration()">
-  <div class="celebrate-card">
-    <h2 style="margin:0;">5 in a row! 🎉</h2>
-    <div class="stars">✨ Donkey moonwalk! 🌙 ✨</div>
-    <div class="donkey-stage">
-      <div class="donkey">🫏</div>
-    </div>
-    <p style="margin:10px 0 0; color:#475569; font-size:14px;">
-      Tap anywhere to continue.
-    </p>
-  </div>
-</div>
+
 <body>
 
-<div class="card">
-  <h1>Find the Sound</h1>
-  <div class="score" id="score">Score: 0 / 0</div>
-
-  <button class="play" onclick="playSound()">▶ Play sound</button>
-
-  <div class="message" id="message">
-    Tap play, then choose the correct grapheme.
+  <!-- celebration overlay (tap anywhere to continue) -->
+  <div id="celebration" onclick="hideCelebration()">
+    <div class="celebrate-card">
+      <h2 style="margin:0;">5 in a row! 🎉</h2>
+      <div class="stars">✨ Donkey moonwalk! 🌙 ✨</div>
+      <div class="donkey-stage">
+        <div class="donkey">🫏</div>
+      </div>
+      <p style="margin:10px 0 0; color:#475569; font-size:14px;">
+        Tap anywhere to continue.
+      </p>
+    </div>
   </div>
 
-  <div class="grid" id="options"></div>
-</div>
+  <div class="card">
+    <h1>Find the sound in the word</h1>
+    <div class="score" id="score">Score: 0 / 0 • Streak: 0</div>
 
-<script>
-const DATA = {
-  "igh": ["night", "light", "high", "sight", "tight", "right"],
-  "oa":  ["boat", "road", "soap", "goat", "coat", "toad"],
-  "ee":  ["tree", "feet", "green", "see", "week", "sleep"],
-  "sh":  ["ship", "shop", "fish", "dish", "shell", "cash"],
-  "ch":  ["chip", "chat", "much", "chin", "chop", "lunch"],
-  "ar":  ["car", "star", "farm", "park", "hard", "yard"],
-  "ur":  ["turn", "burn", "curl", "hurt", "fur", "surf"]
-};
-let sounds = Object.keys(DATA);
-let currentAudio = null;
-let answerSound;
-let correctWord;
-let score = 0;
-let total = 0;
-let streak = 0;
-let locked = false;
+    <button class="play" onclick="playSound()">▶ Play sound</button>
 
-function shuffle(arr) {
-  return arr.sort(() => Math.random() - 0.5);
-}
+    <div class="message" id="message">
+      Tap play, then choose the word with the sound.
+    </div>
 
-function escapeHtml(s) {
-  return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-}
+    <div class="grid" id="options"></div>
+  </div>
 
-function highlightGrapheme(word, grapheme) {
-  // highlight all occurrences (case-insensitive)
-  const safe = escapeHtml(word);
-  const re = new RegExp(grapheme.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
-  return safe.replace(re, (m) => `<span class="hl">${m}</span>`);
-}
+  <script>
+    const DATA = {
+      "igh": ["night", "light", "high", "sight", "tight", "right"],
+      "oa":  ["boat", "road", "soap", "goat", "coat", "toad"],
+      "ee":  ["tree", "feet", "green", "see", "week", "sleep"],
+      "sh":  ["ship", "shop", "fish", "dish", "shell", "cash"],
+      "ch":  ["chip", "chat", "much", "chin", "chop", "lunch"],
+      "ar":  ["car", "star", "farm", "park", "hard", "yard"],
+      "ur":  ["turn", "burn", "curl", "hurt", "fur", "surf"]
+    };
 
-function setMessage(text) {
-  document.getElementById("message").innerText = text;
-}
+    let sounds = Object.keys(DATA);
 
-function setScore() {
-  document.getElementById("score").innerText =
-    `Score: ${score} / ${total}   •   Streak: ${streak}`;
-}
+    let currentAudio = null;
+    let roundId = 0;
 
-function showCelebration() {
-  document.getElementById("celebration").style.display = "flex";
-}
+    let answerSound;
+    let correctWord;
 
-function hideCelebration() {
-  document.getElementById("celebration").style.display = "none";
-  newRound();
-}
+    let score = 0;
+    let total = 0;
+    let streak = 0;
+    let locked = false;
 
-window.hideCelebration = hideCelebration;
+    function shuffle(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
 
-function newRound() {
-  locked = false;
+    function escapeHtml(s) {
+      return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
 
-  answerSound = sounds[Math.floor(Math.random() * sounds.length)];
-  correctWord =
-    DATA[answerSound][Math.floor(Math.random() * DATA[answerSound].length)];
+    function highlightGrapheme(word, grapheme) {
+      const safe = escapeHtml(word);
+      const re = new RegExp(grapheme.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+      return safe.replace(re, (m) => `<span class="hl">${m}</span>`);
+    }
 
-  const wrongSounds = shuffle(sounds.filter(s => s !== answerSound)).slice(0, 2);
-  const wrongWords = wrongSounds.map(s =>
-    DATA[s][Math.floor(Math.random() * DATA[s].length)]
-  );
+    function setMessage(text) {
+      document.getElementById("message").innerText = text;
+    }
 
-  const choices = shuffle([correctWord, ...wrongWords]);
+    function setScore() {
+      document.getElementById("score").innerText =
+        `Score: ${score} / ${total}   •   Streak: ${streak}`;
+    }
 
-  const grid = document.getElementById("options");
-  grid.innerHTML = "";
+    function showCelebration() {
+      document.getElementById("celebration").style.display = "flex";
+    }
 
-  choices.forEach(word => {
-    const btn = document.createElement("button");
-    btn.className = "option";
-    btn.dataset.word = word;
-    btn.innerText = word;
-    btn.onclick = () => pick(word);
-    grid.appendChild(btn);
-  });
+    function hideCelebration() {
+      document.getElementById("celebration").style.display = "none";
+      newRound();
+    }
+    window.hideCelebration = hideCelebration;
 
-  setMessage("Tap play, then choose the word with the sound.");
-  setScore();
-}
+    function stopAnyAudio() {
+      if (!currentAudio) return;
+      try {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio.src = "";
+        currentAudio.load();
+      } catch (e) {}
+      currentAudio = null;
+    }
 
-function playSound() {
-  const candidates = [
-    `audio/${answerSound}.mp3`,
-    `audio/${answerSound}.m4a`,
-    `audio/${answerSound}.mp4`,
-    `Audio/${answerSound}.mp3`,
-    `Audio/${answerSound}.m4a`,
-    `Audio/${answerSound}.mp4`,
-  ];
+    function newRound() {
+      locked = false;
+      roundId++;
 
-  // Stop any previous sound immediately
-  if (currentAudio) {
-    try {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-    } catch (e) {}
-    currentAudio = null;
-  }
+      // Stop/reset any previous sound whenever a new round starts
+      stopAnyAudio();
 
-  let idx = 0;
-  const audio = new Audio();
-  currentAudio = audio;
+      answerSound = sounds[Math.floor(Math.random() * sounds.length)];
+      correctWord = DATA[answerSound][Math.floor(Math.random() * DATA[answerSound].length)];
 
-  audio.addEventListener("error", () => {
-    idx++;
-    if (idx < candidates.length) {
-      audio.src = candidates[idx];
-      audio.play();
-    } else {
-      alert(
-        `No audio found for: ${answerSound}\n\nTried:\n- ` +
-        candidates.join("\n- ")
+      const wrongSounds = shuffle(sounds.filter(s => s !== answerSound)).slice(0, 2);
+      const wrongWords = wrongSounds.map(s =>
+        DATA[s][Math.floor(Math.random() * DATA[s].length)]
       );
+
+      const choices = shuffle([correctWord, ...wrongWords]);
+
+      const grid = document.getElementById("options");
+      grid.innerHTML = "";
+
+      choices.forEach(word => {
+        const btn = document.createElement("button");
+        btn.className = "option";
+        btn.dataset.word = word;
+        btn.innerText = word;
+        btn.onclick = () => pick(word);
+        grid.appendChild(btn);
+      });
+
+      setMessage("Tap play, then choose the word with the sound.");
+      setScore();
     }
-  });
 
-  audio.src = candidates[idx];
-  audio.currentTime = 0;
-  audio.play();
-}
+    function playSound() {
+      const myRound = roundId; // capture current round
 
-function revealHighlights(chosenWord) {
-  const buttons = Array.from(document.querySelectorAll("#options .option"));
-  buttons.forEach(btn => {
-    const w = btn.dataset.word;
-    // freeze tapping
-    btn.disabled = true;
+      const candidates = [
+        `audio/${answerSound}.mp3`,
+        `audio/${answerSound}.m4a`,
+        `audio/${answerSound}.mp4`,
+        `Audio/${answerSound}.mp3`,
+        `Audio/${answerSound}.m4a`,
+        `Audio/${answerSound}.mp4`,
+      ];
 
-    if (w === correctWord) {
-      btn.classList.add("correct");
-      btn.innerHTML = highlightGrapheme(w, answerSound);
-    } else if (w === chosenWord && chosenWord !== correctWord) {
-      btn.classList.add("wrong");
+      // Stop/reset anything already playing
+      stopAnyAudio();
+
+      let idx = 0;
+      const audio = new Audio();
+      audio.preload = "auto";
+      currentAudio = audio;
+
+      const tryPlay = () => {
+        // If the round has moved on since the tap, do nothing.
+        if (myRound !== roundId) return;
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      };
+
+      audio.addEventListener("error", () => {
+        idx++;
+        if (idx < candidates.length) {
+          audio.src = candidates[idx];
+          audio.load();
+          tryPlay();
+        } else {
+          alert(`No audio found for: ${answerSound}`);
+        }
+      });
+
+      audio.src = candidates[idx];
+      audio.load();
+      tryPlay();
     }
-  });
-}
+    window.playSound = playSound;
 
-function pick(choice) {
-  if (locked) return;
-  locked = true;
+    function revealHighlights(chosenWord) {
+      const buttons = Array.from(document.querySelectorAll("#options .option"));
+      buttons.forEach(btn => {
+        const w = btn.dataset.word;
+        btn.disabled = true;
 
-  total++;
+        if (w === correctWord) {
+          btn.classList.add("correct");
+          btn.innerHTML = highlightGrapheme(w, answerSound);
+        } else if (w === chosenWord && chosenWord !== correctWord) {
+          btn.classList.add("wrong");
+        }
+      });
+    }
 
-  const isCorrect = choice === correctWord;
+    function pick(choice) {
+      if (locked) return;
+      locked = true;
 
-  if (isCorrect) {
-    score++;
-    streak++;
-    setMessage("✅ Yes! That word has the sound.");
-    if (navigator.vibrate) navigator.vibrate([35]);
-  } else {
-    streak = 0;
-    setMessage("❌ Not that one — look for the highlighted sound.");
-    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
-  }
+      total++;
 
-  revealHighlights(choice);
-  setScore();
+      const isCorrect = choice === correctWord;
 
-  // If streak hits 5, celebrate before next round
-  if (streak >= 5) {
-    setTimeout(() => {
-      showCelebration();
-    }, 700);
-    return;
-  }
+      if (isCorrect) {
+        score++;
+        streak++;
+        setMessage("✅ Yes! That word has the sound.");
+        if (navigator.vibrate) navigator.vibrate([35]);
+      } else {
+        streak = 0;
+        setMessage("❌ Not that one — look for the highlighted sound.");
+        if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+      }
 
-  setTimeout(newRound, 1600);
-}
+      revealHighlights(choice);
+      setScore();
 
-// wire up the play button
-window.playSound = playSound;
+      // If streak hits 5, celebrate before next round
+      if (streak >= 5) {
+        setTimeout(() => {
+          showCelebration();
+        }, 650);
+        return;
+      }
 
-newRound();
-  if (currentAudio) {
-  try {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
-  } catch (e) {}
-}
-</script>
+      setTimeout(newRound, 1600);
+    }
+
+    newRound();
+  </script>
 
 </body>
 </html>
-</html>
-
-
-
-
