@@ -144,10 +144,33 @@ function newRound() {
 }
 
 function playSound() {
-  const audio = new Audio("audio/" + answerSound + ".mp3");
-  audio.play().catch(() => {
-    alert("Missing audio for: " + answerSound);
+  const candidates = [
+    `audio/${answerSound}.mp3`,
+    `audio/${answerSound}.m4a`,
+    `audio/${answerSound}.mp4`,
+    `Audio/${answerSound}.mp3`,
+    `Audio/${answerSound}.m4a`,
+    `Audio/${answerSound}.mp4`,
+  ];
+
+  let idx = 0;
+  const audio = new Audio();
+
+  audio.addEventListener("error", () => {
+    idx++;
+    if (idx < candidates.length) {
+      audio.src = candidates[idx];
+      audio.play();
+    } else {
+      alert(
+        `No audio found for: ${answerSound}\n\nTried:\n- ` +
+        candidates.join("\n- ")
+      );
+    }
   });
+
+  audio.src = candidates[idx];
+  audio.play();
 }
 
 function revealHighlights(chosenWord) {
@@ -208,3 +231,4 @@ newRound();
 </body>
 </html>
 </html>
+
