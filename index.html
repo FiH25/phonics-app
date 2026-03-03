@@ -71,6 +71,7 @@ const DATA = {
 };
 
 let sounds = Object.keys(DATA);
+let currentAudio = null;
 let answerSound;
 let correctWord;
 let score = 0;
@@ -153,8 +154,18 @@ function playSound() {
     `Audio/${answerSound}.mp4`,
   ];
 
+  // Stop any previous sound immediately
+  if (currentAudio) {
+    try {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    } catch (e) {}
+    currentAudio = null;
+  }
+
   let idx = 0;
   const audio = new Audio();
+  currentAudio = audio;
 
   audio.addEventListener("error", () => {
     idx++;
@@ -170,6 +181,7 @@ function playSound() {
   });
 
   audio.src = candidates[idx];
+  audio.currentTime = 0;
   audio.play();
 }
 
@@ -226,9 +238,16 @@ function pick(choice) {
 window.playSound = playSound;
 
 newRound();
+  if (currentAudio) {
+  try {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  } catch (e) {}
+}
 </script>
 
 </body>
 </html>
 </html>
+
 
