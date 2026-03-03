@@ -217,16 +217,14 @@
     }
     window.hideCelebration = hideCelebration;
 
-    function stopAnyAudio() {
-      if (!currentAudio) return;
-      try {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio.src = "";
-        currentAudio.load();
-      } catch (e) {}
-      currentAudio = null;
-    }
+   function stopAnyAudio() {
+  if (!currentAudio) return;
+  try {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  } catch (e) {}
+  currentAudio = null;
+}
 
     function disablePlayBriefly(ms = 450) {
       const btn = document.getElementById("playBtn");
@@ -267,60 +265,39 @@
       setScore();
     }
 
-    function playSound() {
-      disablePlayBriefly();
+   function playSound() {
+  // Quick tap protection (optional)
+  const btn = document.getElementById("playBtn");
+  if (btn) {
+    btn.disabled = true;
+    setTimeout(() => (btn.disabled = false), 250);
+  }
 
-      const myRound = roundId;
+  // Stop any previous audio
+  if (currentAudio) {
+    try {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    } catch (e) {}
+    currentAudio = null;
+  }
 
-      const candidates = [
-        `audio/${answerSound}.mp3`,
-        `audio/${answerSound}.m4a`,
-        `audio/${answerSound}.mp4`,
-        `Audio/${answerSound}.mp3`,
-        `Audio/${answerSound}.m4a`,
-        `Audio/${answerSound}.mp4`,
-      ];
+  // IMPORTANT: since your files are .mp4, go straight to .mp4
+  const audio = new Audio(`audio/${answerSound}.mp4`);
+  audio.preload = "auto";
+  currentAudio = audio;
 
-      stopAnyAudio();
+  audio.play().catch(() => {
+    // If your folder is named Audio (capital A) on GitHub, try that too
+    const audio2 = new Audio(`Audio/${answerSound}.mp4`);
+    audio2.preload = "auto";
+    currentAudio = audio2;
 
-      let idx = 0;
-      const audio = new Audio();
-      audio.preload = "auto";
-      currentAudio = audio;
-
-      const tryCandidate = (attempt = 1) => {
-        if (myRound !== roundId) return;
-
-        audio.src = candidates[idx];
-        audio.load();
-
-        audio.play().catch(() => {
-          // Retry once on same candidate (mobile timing can reject play)
-          if (attempt < 2) {
-            setTimeout(() => tryCandidate(attempt + 1), 120);
-            return;
-          }
-          idx++;
-          if (idx < candidates.length) {
-            tryCandidate(1);
-          } else {
-            setMessage(`Sound didn’t play that time — tap Play again.`);
-          }
-        });
-      };
-
-      audio.addEventListener("error", () => {
-        idx++;
-        if (idx < candidates.length) {
-          tryCandidate(1);
-        } else {
-          setMessage(`Sound didn’t play that time — tap Play again.`);
-        }
-      });
-
-      tryCandidate(1);
-    }
-    window.playSound = playSound;
+    audio2.play().catch(() => {
+      setMessage(`No recording found for “${answerSound}”.`);
+    });
+  });
+}
 
     function revealHighlights(chosenWord) {
       const buttons = Array.from(document.querySelectorAll("#options .option"));
@@ -377,3 +354,4 @@
 
 </body>
 </html>
+
