@@ -87,7 +87,7 @@
       border-radius: 18px;
       padding: 18px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-      text-align: centre;
+      text-align: center;
     }
 
     .donkey-stage {
@@ -106,7 +106,7 @@
       top: 40px;
       font-size: 54px;
       animation: moonwalk 1.8s ease-in-out infinite;
-      transform: scaleX(-1); /* moonwalk vibe */
+      transform: scaleX(-1);
     }
 
     .stars {
@@ -168,7 +168,7 @@
       "ur":  ["turn", "burn", "curl", "hurt", "fur", "surf"]
     };
 
-    let sounds = Object.keys(DATA);
+    const sounds = Object.keys(DATA);
 
     let currentAudio = null;
     let roundId = 0;
@@ -180,6 +180,9 @@
     let total = 0;
     let streak = 0;
     let locked = false;
+
+    // Ensures the donkey shows only once per multiple of 5.
+    let lastCelebratedMultiple = 0;
 
     function shuffle(arr) {
       return arr.sort(() => Math.random() - 0.5);
@@ -224,17 +227,18 @@
       } catch (e) {}
       currentAudio = null;
     }
-  function disablePlayBriefly(ms = 450) {
-    const btn = document.getElementById("playBtn");
-    if (!btn) return;
-    btn.disabled = true;
-    setTimeout(() => { btn.disabled = false; }, ms);
-  }
+
+    function disablePlayBriefly(ms = 450) {
+      const btn = document.getElementById("playBtn");
+      if (!btn) return;
+      btn.disabled = true;
+      setTimeout(() => { btn.disabled = false; }, ms);
+    }
+
     function newRound() {
       locked = false;
       roundId++;
 
-      // Stop/reset any previous sound whenever a new round starts
       stopAnyAudio();
 
       answerSound = sounds[Math.floor(Math.random() * sounds.length)];
@@ -264,89 +268,57 @@
     }
 
     function playSound() {
-  const myRound = roundId;
+      disablePlayBriefly();
 
-  const candidates = [
-    `audio/${answerSound}.mp3`,
-    `audio/${answerSound}.m4a`,
-    `audio/${answerSound}.mp4`,
-    `Audio/${answerSound}.mp3`,
-    `Audio/${answerSound}.m4a`,
-    `Audio/${answerSound}.mp4`,
-  ];
+      const myRound = roundId;
 
-  stopAnyAudio();
+      const candidates = [
+        `audio/${answerSound}.mp3`,
+        `audio/${answerSound}.m4a`,
+        `audio/${answerSound}.mp4`,
+        `Audio/${answerSound}.mp3`,
+        `Audio/${answerSound}.m4a`,
+        `Audio/${answerSound}.mp4`,
+      ];
 
-  let idx = 0;
-  const audio = new Audio();
-  audio.preload = "auto";
-  currentAudio = audio;
+      stopAnyAudio();
 
-  let gaveUp = false;
-
-  const tryCandidate = () => {
-    if (myRound !== roundId || gaveUp) return;
-    audio.src = candidates[idx];
-    audio.load();
-
-    // Try playing; if it fails due to a transient issue, we'll try next.
-    audio.play().catch(() => {
-      // On some devices play() can reject even for valid files if tapped too fast.
-      // We'll treat it like a transient failure and try the next candidate.
-      idx++;
-      if (idx < candidates.length) tryCandidate();
-      else scheduleMissingAlert();
-    });
-  };
-
-  const scheduleMissingAlert = () => {
-    // Delay the alert slightly to avoid false alarms during rapid taps/loading.
-    if (gaveUp) return;
-    gaveUp = true;
-
-    setTimeout(() => {
-      if (myRound !== roundId) return;
-      alert(`No sound for: ${answerSound}`);
-    }, 250);
-  };
-
-  audio.addEventListener("error", () => {
-    idx++;
-    if (idx < candidates.length) {
-      tryCandidate();
-    } else {
-      scheduleMissingAlert();
-    }
-  });
-
-  tryCandidate();
-}
       let idx = 0;
       const audio = new Audio();
       audio.preload = "auto";
       currentAudio = audio;
 
-      const tryPlay = () => {
-        // If the round has moved on since the tap, do nothing.
+      const tryCandidate = (attempt = 1) => {
         if (myRound !== roundId) return;
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
+
+        audio.src = candidates[idx];
+        audio.load();
+
+        audio.play().catch(() => {
+          // Retry once on same candidate (mobile timing can reject play)
+          if (attempt < 2) {
+            setTimeout(() => tryCandidate(attempt + 1), 120);
+            return;
+          }
+          idx++;
+          if (idx < candidates.length) {
+            tryCandidate(1);
+          } else {
+            setMessage(`Sound didn’t play that time — tap Play again.`);
+          }
+        });
       };
 
       audio.addEventListener("error", () => {
         idx++;
         if (idx < candidates.length) {
-          audio.src = candidates[idx];
-          audio.load();
-          tryPlay();
+          tryCandidate(1);
         } else {
-          alert(`No audio found for: ${answerSound}`);
+          setMessage(`Sound didn’t play that time — tap Play again.`);
         }
       });
 
-      audio.src = candidates[idx];
-      audio.load();
-      tryPlay();
+      tryCandidate(1);
     }
     window.playSound = playSound;
 
@@ -387,11 +359,13 @@
       revealHighlights(choice);
       setScore();
 
-      // If streak hits 5, celebrate before next round
-      if (streak >= 5) {
-        setTimeout(() => {
-          showCelebration();
-        }, 650);
+      // Celebrate only at multiples of 5 (5, 10, 15...) and only once per multiple.
+      const currentMultiple = Math.floor(streak / 5) * 5;
+      const shouldCelebrate = isCorrect && streak > 0 && (streak % 5 === 0) && currentMultiple > lastCelebratedMultiple;
+
+      if (shouldCelebrate) {
+        lastCelebratedMultiple = currentMultiple;
+        setTimeout(() => showCelebration(), 650);
         return;
       }
 
@@ -403,4 +377,3 @@
 
 </body>
 </html>
-
