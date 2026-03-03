@@ -1,68 +1,16 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Find the Sound</title>
-<style>
-body {
-  font-family: -apple-system, system-ui, sans-serif;
-  background: #f4f7fb;
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-}
-.card {
-  background: white;
-  max-width: 420px;
-  width: 100%;
-  border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-h1 { margin: 0 0 10px; }
-button {
-  border-radius: 14px;
-  border: none;
-  padding: 18px;
-  font-size: 22px;
-  font-weight: bold;
-  margin: 6px 0;
-}
-.play { background: #0ea5e9; color: white; }
-.option { background: white; border: 2px solid #ddd; }
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-.message {
-  background: #eef2f7;
-  padding: 10px;
-  border-radius: 12px;
-  margin: 10px 0;
-}
-.score { font-size: 14px; color: #555; }
-</style>
-</head>
-<body>
-
-<div class="card">
-  <h1>Find the Sound</h1>
-  <div class="score" id="score">Score: 0 / 0</div>
-
-  <button class="play" onclick="playSound()">▶ Play sound</button>
-
-  <div class="message" id="message">
-    Tap play, then choose the correct grapheme.
-  </div>
-
-  <div class="grid" id="options"></div>
-</div>
-
 <script>
-const GRAPHEMES = ["sh","ch","th","ng","ee","igh","oa","ar","ur"];
+const DATA = {
+  "igh": ["night", "light", "high"],
+  "oa": ["boat", "road", "soap"],
+  "ee": ["tree", "feet", "green"],
+  "sh": ["ship", "shop", "fish"],
+  "ch": ["chip", "chat", "much"],
+  "ar": ["car", "star", "farm"],
+  "ur": ["turn", "burn", "curl"]
+};
 
-let answer;
+let sounds = Object.keys(DATA);
+let answerSound;
 let score = 0;
 let total = 0;
 
@@ -71,44 +19,57 @@ function shuffle(arr) {
 }
 
 function newRound() {
-  answer = GRAPHEMES[Math.floor(Math.random() * GRAPHEMES.length)];
-  const others = GRAPHEMES.filter(g => g !== answer);
-  const choices = shuffle([answer, ...shuffle(others).slice(0,2)]);
+  answerSound = sounds[Math.floor(Math.random() * sounds.length)];
+
+  const correctWord =
+    DATA[answerSound][Math.floor(Math.random() * DATA[answerSound].length)];
+
+  const wrongSounds = shuffle(sounds.filter(s => s !== answerSound)).slice(0,2);
+
+  const wrongWords = wrongSounds.map(s =>
+    DATA[s][Math.floor(Math.random() * DATA[s].length)]
+  );
+
+  const choices = shuffle([correctWord, ...wrongWords]);
+
   const grid = document.getElementById("options");
   grid.innerHTML = "";
-  choices.forEach(g => {
+
+  choices.forEach(word => {
     const btn = document.createElement("button");
     btn.className = "option";
-    btn.innerText = g;
-    btn.onclick = () => pick(g);
+    btn.innerText = word;
+    btn.onclick = () => pick(word, correctWord);
     grid.appendChild(btn);
   });
+
   document.getElementById("message").innerText =
-    "Tap play, then choose the correct grapheme.";
+    "Tap play, then choose the word with the sound.";
 }
 
 function playSound() {
-  const audio = new Audio("audio/" + answer + ".mp4");
+  const audio = new Audio("audio/" + answerSound + ".mp3");
   audio.play().catch(() => {
-    alert("Sound file missing for " + answer);
+    alert("Missing audio for: " + answerSound);
   });
 }
-function pick(choice) {
+
+function pick(choice, correctWord) {
   total++;
-  if (choice === answer) {
+
+  if (choice === correctWord) {
     score++;
-    document.getElementById("message").innerText = "✅ Correct!";
+    document.getElementById("message").innerText = "✅ Yes! That word has the sound.";
   } else {
     document.getElementById("message").innerText =
-      "❌ It was " + answer;
+      "❌ The sound was in: " + correctWord;
   }
+
   document.getElementById("score").innerText =
     "Score: " + score + " / " + total;
-  setTimeout(newRound, 1000);
+
+  setTimeout(newRound, 1500);
 }
 
 newRound();
 </script>
-
-</body>
-</html>
