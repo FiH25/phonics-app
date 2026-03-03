@@ -1,3 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find the Sound</title>
+<style>
+body {
+  font-family: -apple-system, system-ui, sans-serif;
+  background: #f4f7fb;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+.card {
+  background: white;
+  max-width: 420px;
+  width: 100%;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+h1 { margin: 0 0 10px; }
+button {
+  border-radius: 14px;
+  border: none;
+  padding: 18px;
+  font-size: 22px;
+  font-weight: bold;
+  margin: 6px 0;
+}
+.play { background: #0ea5e9; color: white; }
+.option { background: white; border: 2px solid #ddd; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.message {
+  background: #eef2f7;
+  padding: 10px;
+  border-radius: 12px;
+  margin: 10px 0;
+}
+.score { font-size: 14px; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Find the Sound</h1>
+  <div class="score" id="score">Score: 0 / 0</div>
+
+  <button class="play" onclick="playSound()">▶ Play sound</button>
+
+  <div class="message" id="message">
+    Tap play, then choose the correct grapheme.
+  </div>
+
+  <div class="grid" id="options"></div>
+</div>
+
 <script>
 const DATA = {
   "igh": ["night", "light", "high"],
@@ -11,21 +72,55 @@ const DATA = {
 
 let sounds = Object.keys(DATA);
 let answerSound;
+let correctWord;
 let score = 0;
 let total = 0;
+let streak = 0;
+let locked = false;
 
 function shuffle(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
 
-function newRound() {
-  answerSound = sounds[Math.floor(Math.random() * sounds.length)];
+function escapeHtml(s) {
+  return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
 
-  const correctWord =
+function highlightGrapheme(word, grapheme) {
+  // highlight all occurrences (case-insensitive)
+  const safe = escapeHtml(word);
+  const re = new RegExp(grapheme.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+  return safe.replace(re, (m) => `<span class="hl">${m}</span>`);
+}
+
+function setMessage(text) {
+  document.getElementById("message").innerText = text;
+}
+
+function setScore() {
+  document.getElementById("score").innerText =
+    `Score: ${score} / ${total}   •   Streak: ${streak}`;
+}
+
+function showCelebration() {
+  document.getElementById("celebration").style.display = "flex";
+}
+
+function hideCelebration() {
+  document.getElementById("celebration").style.display = "none";
+  newRound();
+}
+
+window.hideCelebration = hideCelebration;
+
+function newRound() {
+  locked = false;
+
+  answerSound = sounds[Math.floor(Math.random() * sounds.length)];
+  correctWord =
     DATA[answerSound][Math.floor(Math.random() * DATA[answerSound].length)];
 
-  const wrongSounds = shuffle(sounds.filter(s => s !== answerSound)).slice(0,2);
-
+  const wrongSounds = shuffle(sounds.filter(s => s !== answerSound)).slice(0, 2);
   const wrongWords = wrongSounds.map(s =>
     DATA[s][Math.floor(Math.random() * DATA[s].length)]
   );
@@ -38,13 +133,14 @@ function newRound() {
   choices.forEach(word => {
     const btn = document.createElement("button");
     btn.className = "option";
+    btn.dataset.word = word;
     btn.innerText = word;
-    btn.onclick = () => pick(word, correctWord);
+    btn.onclick = () => pick(word);
     grid.appendChild(btn);
   });
 
-  document.getElementById("message").innerText =
-    "Tap play, then choose the word with the sound.";
+  setMessage("Tap play, then choose the word with the sound.");
+  setScore();
 }
 
 function playSound() {
@@ -54,22 +150,61 @@ function playSound() {
   });
 }
 
-function pick(choice, correctWord) {
+function revealHighlights(chosenWord) {
+  const buttons = Array.from(document.querySelectorAll("#options .option"));
+  buttons.forEach(btn => {
+    const w = btn.dataset.word;
+    // freeze tapping
+    btn.disabled = true;
+
+    if (w === correctWord) {
+      btn.classList.add("correct");
+      btn.innerHTML = highlightGrapheme(w, answerSound);
+    } else if (w === chosenWord && chosenWord !== correctWord) {
+      btn.classList.add("wrong");
+    }
+  });
+}
+
+function pick(choice) {
+  if (locked) return;
+  locked = true;
+
   total++;
 
-  if (choice === correctWord) {
+  const isCorrect = choice === correctWord;
+
+  if (isCorrect) {
     score++;
-    document.getElementById("message").innerText = "✅ Yes! That word has the sound.";
+    streak++;
+    setMessage("✅ Yes! That word has the sound.");
+    if (navigator.vibrate) navigator.vibrate([35]);
   } else {
-    document.getElementById("message").innerText =
-      "❌ The sound was in: " + correctWord;
+    streak = 0;
+    setMessage("❌ Not that one — look for the highlighted sound.");
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
   }
 
-  document.getElementById("score").innerText =
-    "Score: " + score + " / " + total;
+  revealHighlights(choice);
+  setScore();
 
-  setTimeout(newRound, 1500);
+  // If streak hits 5, celebrate before next round
+  if (streak >= 5) {
+    setTimeout(() => {
+      showCelebration();
+    }, 700);
+    return;
+  }
+
+  setTimeout(newRound, 1600);
 }
+
+// wire up the play button
+window.playSound = playSound;
 
 newRound();
 </script>
+
+</body>
+</html>
+</html>
