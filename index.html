@@ -808,23 +808,20 @@ function handleTileTap(button, word, grapheme) {
     window.playSound = playSound;
 
     function revealHighlights(chosenWord) {
-      const buttons = Array.from(document.querySelectorAll("#options .option"));
+  const buttons = Array.from(document.querySelectorAll("#options .option"));
 
-      buttons.forEach(btn => {
-        const w = btn.dataset.word;
-        btn.disabled = true;
+  buttons.forEach(btn => {
+    const w = btn.dataset.word;
+    btn.disabled = true;
 
-        if (w === correctWord) {
-          btn.classList.add("correct");
-          if (mode === "sound") {
-            btn.innerHTML = highlightGrapheme(w, answerSound);
-          }
-        } else if (w === chosenWord && chosenWord !== correctWord) {
-          btn.classList.add("wrong");
-        }
-      });
+    if (w === correctWord) {
+      btn.classList.add("correct");
+      btn.innerText = w;
+    } else if (w === chosenWord && chosenWord !== correctWord) {
+      btn.classList.add("wrong");
     }
-
+  });
+}
    function pick(choice) {
   if (locked || awaitingTileTap) return;
   locked = true;
@@ -882,6 +879,7 @@ function handleTileTap(button, word, grapheme) {
   </script>
 </body>
 </html>
+
 
 
 
