@@ -17,7 +17,6 @@
       --green: #22c55e;
       --red: #ef4444;
       --yellow: #fde68a;
-      --purple: #c084fc;
       --border: #dbeafe;
       --shadow: 0 12px 35px rgba(31, 41, 55, 0.14);
     }
@@ -106,6 +105,7 @@
       display: flex;
       gap: 10px;
       margin-bottom: 12px;
+      flex-wrap: wrap;
     }
 
     button {
@@ -122,7 +122,7 @@
     }
 
     .play {
-      flex: 1;
+      flex: 1 1 220px;
       background: linear-gradient(135deg, var(--blue), var(--blue-dark));
       color: white;
       font-weight: 800;
@@ -144,6 +144,20 @@
       padding: 16px 14px;
       font-weight: 700;
       min-width: 68px;
+    }
+
+    .mode-btn {
+      background: white;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px;
+      font-weight: 700;
+      min-width: 120px;
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, #e0f2fe, #fdf2f8);
+      border-color: #93c5fd;
     }
 
     .message {
@@ -214,7 +228,6 @@
       text-align: center;
     }
 
-    /* Tiny firework delight */
     #sparkle-layer {
       pointer-events: none;
       position: fixed;
@@ -243,7 +256,6 @@
       }
     }
 
-    /* Donkey overlay */
     #celebration {
       position: fixed;
       inset: 0;
@@ -304,12 +316,6 @@
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.12); }
     }
-
-    @media (min-width: 480px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
   </style>
 </head>
 
@@ -334,12 +340,17 @@
       <div class="top-bar">
         <div class="title-wrap">
           <h1>Find the sound in the word</h1>
-          <div class="subtitle">Listen carefully, then tap the word with the matching sound.</div>
+          <div class="subtitle" id="subtitle">Listen carefully, then tap the word with the matching sound.</div>
         </div>
         <div class="score-pill">
           <span class="small">Score • streak</span>
           <span class="big" id="score">0 / 0 • 0</span>
         </div>
+      </div>
+
+      <div class="play-row">
+        <button id="soundModeBtn" class="mode-btn active" onclick="setMode('sound')">Sound mode</button>
+        <button id="trickyModeBtn" class="mode-btn" onclick="setMode('tricky')">Tricky words</button>
       </div>
 
       <div class="play-row">
@@ -356,21 +367,99 @@
   </div>
 
   <script>
-    const DATA = {
+    const SOUND_DATA = {
+      "s": ["sun", "sock", "sand", "sit", "moss", "bus"],
+      "a": ["apple", "ant", "bag", "cat", "jam", "hat"],
+      "t": ["tap", "tin", "top", "bat", "net", "hat"],
+      "p": ["pan", "pig", "pen", "cup", "tap", "zip"],
+      "i": ["ink", "in", "it", "pin", "sit", "milk"],
+      "n": ["net", "nap", "ten", "pin", "sun", "man"],
+      "m": ["mat", "map", "mud", "ham", "milk", "jam"],
+      "d": ["dog", "dip", "mud", "lid", "red", "hand"],
+      "g": ["gap", "goat", "gum", "bag", "frog", "big"],
+      "o": ["octopus", "on", "hot", "dog", "box", "sock"],
+      "c": ["cat", "cup", "cap", "duck", "sock", "milk"],
+      "k": ["kid", "kit", "king", "book", "sock", "milk"],
+      "ck": ["duck", "sock", "back", "pick", "clock", "rock"],
+      "e": ["egg", "pen", "red", "ten", "bed", "shell"],
+      "u": ["up", "sun", "bus", "cup", "mud", "run"],
+      "r": ["rat", "red", "rip", "frog", "drum", "green"],
+      "h": ["hat", "hen", "hop", "hand", "hill", "shop"],
+      "b": ["bat", "bed", "big", "cab", "rub", "boat"],
+      "f": ["fish", "fan", "fog", "cliff", "puff", "leaf"],
+      "ff": ["cliff", "puff", "off", "sniff", "stuff", "cuff"],
+      "l": ["leg", "lid", "lip", "bell", "milk", "lamp"],
+      "ll": ["bell", "shell", "hill", "fill", "doll", "well"],
+      "ss": ["dress", "hiss", "glass", "mess", "kiss", "boss"],
+
+      "j": ["jam", "jet", "jog", "jelly", "jump", "jacket"],
+      "v": ["van", "vet", "visit", "five", "seven", "wave"],
+      "w": ["web", "win", "wet", "swim", "twist", "window"],
+      "x": ["fox", "box", "six", "next", "mix", "taxi"],
+      "y": ["yes", "yum", "yellow", "yap", "yell", "yo-yo"],
+      "z": ["zip", "zebra", "zoo", "buzz", "fizz", "maze"],
+      "zz": ["buzz", "fizz", "jazz", "fuzzy", "dizzy", "puzzle"],
+      "qu": ["queen", "quiz", "quack", "quick", "quilt", "squid"],
+      "ch": ["chip", "chat", "much", "chin", "chop", "lunch", "chick", "bench"],
+      "sh": ["ship", "shop", "fish", "dish", "shell", "cash", "brush", "shed"],
+      "th": ["thin", "thick", "bath", "thumb", "moth", "three"],
+      "ng": ["sing", "ring", "bang", "wing", "king", "song"],
+      "ai": ["rain", "tail", "paint", "snail", "train", "wait"],
+      "ee": ["tree", "feet", "green", "see", "week", "sleep", "sheep", "seed"],
       "igh": ["night", "light", "high", "sight", "tight", "right", "bright"],
-      "oa":  ["boat", "road", "soap", "goat", "coat", "toad", "float"],
-      "ee":  ["tree", "feet", "green", "see", "week", "sleep", "sheep", "seed"],
-      "sh":  ["ship", "shop", "fish", "dish", "shell", "cash", "brush", "shed"],
-      "ch":  ["chip", "chat", "much", "chin", "chop", "lunch", "chick", "bench"],
-      "ar":  ["car", "star", "farm", "park", "hard", "yard", "shark", "start"],
-      "ur":  ["turn", "burn", "curl", "hurt", "fur", "surf", "church", "burst"]
+      "oa": ["boat", "road", "soap", "goat", "coat", "toad", "float"],
+      "oo": ["moon", "spoon", "book", "cook", "foot", "zoo"],
+      "ar": ["car", "star", "farm", "park", "hard", "yard", "shark", "start"],
+      "or": ["fork", "storm", "corn", "short", "torch", "horse"],
+      "ur": ["turn", "burn", "curl", "hurt", "fur", "surf", "church", "burst"],
+      "ow": ["cow", "down", "owl", "brown", "town", "shout"],
+      "oi": ["coin", "soil", "boil", "join", "foil", "point"],
+      "ear": ["hear", "near", "dear", "fear", "year", "beard"],
+      "air": ["hair", "fair", "chair", "stair", "pair", "snail"],
+      "ure": ["pure", "cure", "sure", "secure", "mural", "curious"],
+      "er": ["her", "corner", "river", "letter", "hammer", "winter"],
+
+      "ay": ["play", "tray", "day", "stay", "spray", "crayon"],
+      "ou": ["out", "shout", "cloud", "loud", "sound", "found"],
+      "ie": ["pie", "tie", "lie", "tried", "cried", "flies"],
+      "ea": ["sea", "leaf", "beach", "seat", "read", "clean"],
+      "oy": ["boy", "toy", "enjoy", "royal", "annoy", "oyster"],
+      "ir": ["bird", "girl", "shirt", "skirt", "third", "chirp"],
+      "ue": ["blue", "glue", "flue", "argue", "true", "rescue"],
+      "aw": ["saw", "paw", "yawn", "straw", "crawl", "draw"],
+      "wh": ["when", "what", "whip", "wheel", "whale", "whisk"],
+      "ph": ["phone", "photo", "dolphin", "graph", "elephant", "alphabet"]
     };
 
-    const sounds = Object.keys(DATA);
+    const TRICKY_DATA = {
+      "i": { label: "I", audio: "i_word", distractors: ["is", "in", "it", "if", "my", "go"] },
+      "no": { label: "no", audio: "no", distractors: ["go", "to", "so", "on", "not", "he"] },
+      "go": { label: "go", audio: "go", distractors: ["no", "to", "so", "do", "we", "me"] },
+      "to": { label: "to", audio: "to", distractors: ["go", "do", "too", "no", "into", "be"] },
+      "into": { label: "into", audio: "into", distractors: ["in", "to", "onto", "under", "go", "they"] },
 
+      "he": { label: "he", audio: "he", distractors: ["she", "we", "me", "be", "her", "the"] },
+      "she": { label: "she", audio: "she", distractors: ["he", "we", "me", "be", "her", "they"] },
+      "we": { label: "we", audio: "we", distractors: ["he", "she", "me", "be", "they", "was"] },
+      "me": { label: "me", audio: "me", distractors: ["he", "we", "be", "she", "my", "the"] },
+      "be": { label: "be", audio: "be", distractors: ["me", "he", "we", "she", "was", "go"] },
+      "was": { label: "was", audio: "was", distractors: ["as", "is", "we", "all", "my", "are"] },
+      "you": { label: "you", audio: "you", distractors: ["your", "yours", "they", "we", "my", "me"] },
+      "they": { label: "they", audio: "they", distractors: ["them", "day", "we", "are", "you", "my"] },
+      "all": { label: "all", audio: "all", distractors: ["ball", "call", "are", "my", "was", "the"] },
+      "are": { label: "are", audio: "are", distractors: ["our", "all", "my", "was", "her", "they"] },
+      "my": { label: "my", audio: "my", distractors: ["me", "by", "they", "you", "I", "go"] },
+      "her": { label: "her", audio: "her", distractors: ["he", "here", "are", "my", "she", "was"] }
+    };
+
+    const soundKeys = Object.keys(SOUND_DATA);
+    const trickyKeys = Object.keys(TRICKY_DATA);
+
+    let mode = "sound";
     let currentAudio = null;
     let answerSound;
     let correctWord;
+    let correctAudioKey;
     let score = 0;
     let total = 0;
     let streak = 0;
@@ -427,7 +516,22 @@
       newRound();
     }
 
+    function setMode(newMode) {
+      mode = newMode;
+      document.getElementById("soundModeBtn").classList.toggle("active", mode === "sound");
+      document.getElementById("trickyModeBtn").classList.toggle("active", mode === "tricky");
+
+      if (mode === "sound") {
+        document.getElementById("subtitle").innerText = "Listen carefully, then tap the word with the matching sound.";
+      } else {
+        document.getElementById("subtitle").innerText = "Listen carefully, then tap the tricky word you hear.";
+      }
+
+      newRound();
+    }
+
     window.hideCelebration = hideCelebration;
+    window.setMode = setMode;
 
     function launchSparkles() {
       const layer = document.getElementById("sparkle-layer");
@@ -445,10 +549,13 @@
         spark.style.setProperty("--dy", `${(Math.random() - 0.5) * 180}px`);
         layer.appendChild(spark);
 
-        setTimeout(() => {
-          spark.remove();
-        }, 750);
+        setTimeout(() => spark.remove(), 750);
       }
+    }
+
+    function pickUniqueWords(words, count, exclude = []) {
+      const filtered = words.filter(w => !exclude.includes(w));
+      return shuffle(filtered).slice(0, count);
     }
 
     function newRound() {
@@ -456,39 +563,68 @@
       stopAnyAudio();
       setPlayBusy(false);
 
-      answerSound = sounds[Math.floor(Math.random() * sounds.length)];
-      correctWord = DATA[answerSound][Math.floor(Math.random() * DATA[answerSound].length)];
-
-      const wrongSounds = shuffle(sounds.filter(s => s !== answerSound)).slice(0, 2);
-      const wrongWords = wrongSounds.map(sound =>
-        DATA[sound][Math.floor(Math.random() * DATA[sound].length)]
-      );
-
-      const choices = shuffle([correctWord, ...wrongWords]);
-
       const grid = document.getElementById("options");
       grid.innerHTML = "";
 
-      choices.forEach(word => {
-        const btn = document.createElement("button");
-        btn.className = "option";
-        btn.dataset.word = word;
-        btn.innerText = word;
-        btn.onclick = () => pick(word);
-        grid.appendChild(btn);
-      });
+      if (mode === "sound") {
+        answerSound = soundKeys[Math.floor(Math.random() * soundKeys.length)];
+        correctAudioKey = answerSound;
 
-      setMessage("Tap play, then choose the word with the sound.");
+        const soundWords = SOUND_DATA[answerSound];
+        correctWord = soundWords[Math.floor(Math.random() * soundWords.length)];
+
+        const wrongSounds = shuffle(soundKeys.filter(s => s !== answerSound)).slice(0, 2);
+        const wrongWords = wrongSounds.map(sound => {
+          const options = SOUND_DATA[sound];
+          return options[Math.floor(Math.random() * options.length)];
+        });
+
+        const choices = shuffle([correctWord, ...wrongWords]);
+
+        choices.forEach(word => {
+          const btn = document.createElement("button");
+          btn.className = "option";
+          btn.dataset.word = word;
+          btn.innerText = word;
+          btn.onclick = () => pick(word);
+          grid.appendChild(btn);
+        });
+
+        setMessage("Tap play, then choose the word with the sound.");
+      } else {
+        const trickyKey = trickyKeys[Math.floor(Math.random() * trickyKeys.length)];
+        const tricky = TRICKY_DATA[trickyKey];
+
+        answerSound = trickyKey;
+        correctAudioKey = tricky.audio;
+        correctWord = tricky.label;
+
+        const wrongWords = pickUniqueWords(tricky.distractors, 2, [correctWord]);
+        const choices = shuffle([correctWord, ...wrongWords]);
+
+        choices.forEach(word => {
+          const btn = document.createElement("button");
+          btn.className = "option";
+          btn.dataset.word = word;
+          btn.innerText = word;
+          btn.onclick = () => pick(word);
+          grid.appendChild(btn);
+        });
+
+        setMessage("Tap play, then choose the tricky word you hear.");
+      }
+
       setScore();
     }
 
     function playSound() {
-      if (!answerSound) return;
+      const key = correctAudioKey;
+      if (!key) return;
 
       stopAnyAudio();
       setPlayBusy(true);
 
-      const audio = new Audio(`audio/${answerSound}.mp4`);
+      const audio = new Audio(`audio/${key}.m4a`);
       audio.preload = "auto";
       currentAudio = audio;
 
@@ -498,7 +634,7 @@
 
       audio.addEventListener("error", () => {
         setPlayBusy(false);
-        setMessage(`No recording found for "${answerSound}" yet.`);
+        setMessage(`No recording found for "${key}" yet.`);
       });
 
       audio.play()
@@ -511,6 +647,8 @@
         });
     }
 
+    window.playSound = playSound;
+
     function revealHighlights(chosenWord) {
       const buttons = Array.from(document.querySelectorAll("#options .option"));
 
@@ -520,7 +658,9 @@
 
         if (w === correctWord) {
           btn.classList.add("correct");
-          btn.innerHTML = highlightGrapheme(w, answerSound);
+          if (mode === "sound") {
+            btn.innerHTML = highlightGrapheme(w, answerSound);
+          }
         } else if (w === chosenWord && chosenWord !== correctWord) {
           btn.classList.add("wrong");
         }
@@ -537,12 +677,15 @@
       if (isCorrect) {
         score++;
         streak++;
-        setMessage("✅ Yes! That word has the sound.");
+        setMessage(mode === "sound" ? "✅ Yes! That word has the sound." : "✅ Yes! That is the tricky word.");
         launchSparkles();
         if (navigator.vibrate) navigator.vibrate([25]);
       } else {
         streak = 0;
-        setMessage("❌ Not that one — look for the highlighted sound.");
+        setMessage(mode === "sound"
+          ? "❌ Not that one — look for the highlighted sound."
+          : `❌ Not that one — the tricky word was "${correctWord}".`
+        );
         if (navigator.vibrate) navigator.vibrate([90, 50, 90]);
       }
 
