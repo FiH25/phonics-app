@@ -316,6 +316,54 @@
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.12); }
     }
+    .tile-stage {
+  margin-top: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #ffffff, #f8fbff);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.06);
+}
+
+.tile-prompt {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text);
+  text-align: center;
+}
+
+.tile-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sound-tile {
+  min-width: 54px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 2px solid #dbeafe;
+  background: white;
+  font-size: 1.35rem;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
+.sound-tile.correct {
+  border-color: var(--green);
+  background: linear-gradient(135deg, #ffffff, #f0fdf4);
+}
+
+.sound-tile.wrong {
+  border-color: var(--red);
+  background: linear-gradient(135deg, #ffffff, #fef2f2);
+}
+
+.hidden {
+  display: none;
+}
   </style>
 </head>
 
@@ -361,6 +409,10 @@
       <div class="message" id="message">Tap play, then choose the word with the sound.</div>
 
       <div class="grid" id="options"></div>
+      <div id="tileStage" class="tile-stage hidden">
+  <div id="tilePrompt" class="tile-prompt">Can you tap the sound in the word?</div>
+  <div id="tileRow" class="tile-row"></div>
+</div>
 
       <div class="footer-note">Great spotting helps reading grow.</div>
     </div>
@@ -471,6 +523,8 @@
     let streak = 0;
     let locked = false;
     let lastCelebratedMultiple = 0;
+    let awaitingTileTap = false;
+    let tileCorrectPart = "";
 
     function shuffle(arr) {
       return [...arr].sort(() => Math.random() - 0.5);
@@ -563,11 +617,109 @@
       const filtered = words.filter(w => !exclude.includes(w));
       return shuffle(filtered).slice(0, count);
     }
+function splitWordIntoTiles(word, grapheme) {
+  const lowerWord = word.toLowerCase();
+  const lowerGrapheme = grapheme.toLowerCase();
+  const index = lowerWord.indexOf(lowerGrapheme);
 
+  if (index === -1) {
+    return [word];
+  }
+
+  const before = word.slice(0, index);
+  const match = word.slice(index, index + grapheme.length);
+  const after = word.slice(index + grapheme.length);
+
+  const parts = [];
+  if (before) {
+    for (const char of before) parts.push(char);
+  }
+  parts.push(match);
+  if (after) {
+    for (const char of after) parts.push(char);
+  }
+
+  return parts;
+}
+
+function hideTileStage() {
+  const tileStage = document.getElementById("tileStage");
+  const tileRow = document.getElementById("tileRow");
+  tileStage.classList.add("hidden");
+  tileRow.innerHTML = "";
+  awaitingTileTap = false;
+  tileCorrectPart = "";
+}
+
+function showTileStage(word, grapheme) {
+  const tileStage = document.getElementById("tileStage");
+  const tilePrompt = document.getElementById("tilePrompt");
+  const tileRow = document.getElementById("tileRow");
+
+  tileRow.innerHTML = "";
+  tileStage.classList.remove("hidden");
+
+  const parts = splitWordIntoTiles(word, grapheme);
+  tileCorrectPart = grapheme.toLowerCase();
+  awaitingTileTap = true;
+
+  tilePrompt.innerText = `Great! Now tap "${grapheme}" in "${word}".`;
+
+  parts.forEach(part => {
+    const btn = document.createElement("button");
+    btn.className = "sound-tile";
+    btn.innerText = part;
+    btn.dataset.part = part.toLowerCase();
+    btn.onclick = () => handleTileTap(btn, word, grapheme);
+    tileRow.appendChild(btn);
+  });
+}
+
+function handleTileTap(button, word, grapheme) {
+  if (!awaitingTileTap) return;
+
+  const chosen = button.dataset.part;
+  const buttons = Array.from(document.querySelectorAll(".sound-tile"));
+
+  if (chosen === tileCorrectPart) {
+    button.classList.add("correct");
+    awaitingTileTap = false;
+    setMessage(`✅ Brilliant! You found "${grapheme}" in "${word}".`);
+    launchSparkles();
+    if (navigator.vibrate) navigator.vibrate([25]);
+
+    setTimeout(() => {
+      hideTileStage();
+      const currentMultiple = Math.floor(streak / 5) * 5;
+      const shouldCelebrate =
+        streak > 0 &&
+        streak % 5 === 0 &&
+        currentMultiple > lastCelebratedMultiple;
+
+      if (shouldCelebrate) {
+        lastCelebratedMultiple = currentMultiple;
+        showCelebration();
+      } else {
+        newRound();
+      }
+    }, 900);
+  } else {
+    button.classList.add("wrong");
+    setMessage(`Try again — tap "${grapheme}" in "${word}".`);
+    if (navigator.vibrate) navigator.vibrate([70]);
+  }
+
+  buttons.forEach(btn => {
+    if (btn.dataset.part === tileCorrectPart && !awaitingTileTap) {
+      btn.classList.add("correct");
+    }
+  });
+}
     function newRound() {
       locked = false;
       stopAnyAudio();
       setPlayBusy(false);
+      hideTileStage();
 
       const grid = document.getElementById("options");
       grid.innerHTML = "";
@@ -673,50 +825,63 @@
       });
     }
 
-    function pick(choice) {
-      if (locked) return;
-      locked = true;
+   function pick(choice) {
+  if (locked || awaitingTileTap) return;
+  locked = true;
 
-      total++;
-      const isCorrect = choice === correctWord;
+  total++;
+  const isCorrect = choice === correctWord;
 
-      if (isCorrect) {
-        score++;
-        streak++;
-        setMessage(mode === "sound" ? "✅ Yes! That word has the sound." : "✅ Yes! That is the tricky word.");
-        launchSparkles();
-        if (navigator.vibrate) navigator.vibrate([25]);
-      } else {
-        streak = 0;
-        setMessage(mode === "sound"
-          ? "❌ Not that one — look for the highlighted sound."
-          : `❌ Not that one — the tricky word was "${correctWord}".`
-        );
-        if (navigator.vibrate) navigator.vibrate([90, 50, 90]);
-      }
+  if (isCorrect) {
+    score++;
+    streak++;
+    setMessage("✅ Yes! Now find the sound in the word.");
+    if (navigator.vibrate) navigator.vibrate([25]);
+  } else {
+    streak = 0;
+    setMessage(mode === "sound"
+      ? "❌ Not that one — look for the highlighted sound."
+      : `❌ Not that one — the tricky word was "${correctWord}".`
+    );
+    if (navigator.vibrate) navigator.vibrate([90, 50, 90]);
+  }
 
-      revealHighlights(choice);
-      setScore();
+  revealHighlights(choice);
+  setScore();
 
-      const currentMultiple = Math.floor(streak / 5) * 5;
-      const shouldCelebrate =
-        isCorrect &&
-        streak > 0 &&
-        streak % 5 === 0 &&
-        currentMultiple > lastCelebratedMultiple;
+  if (isCorrect && mode === "sound") {
+    setTimeout(() => {
+      showTileStage(correctWord, answerSound);
+    }, 700);
+    return;
+  }
 
-      if (shouldCelebrate) {
-        lastCelebratedMultiple = currentMultiple;
-        setTimeout(() => showCelebration(), 750);
-        return;
-      }
+  if (isCorrect && mode === "tricky") {
+    launchSparkles();
 
-      setTimeout(newRound, 1500);
+    const currentMultiple = Math.floor(streak / 5) * 5;
+    const shouldCelebrate =
+      streak > 0 &&
+      streak % 5 === 0 &&
+      currentMultiple > lastCelebratedMultiple;
+
+    if (shouldCelebrate) {
+      lastCelebratedMultiple = currentMultiple;
+      setTimeout(() => showCelebration(), 750);
+      return;
     }
+
+    setTimeout(newRound, 1500);
+    return;
+  }
+
+  setTimeout(newRound, 1500);
+}
 
     newRound();
   </script>
 </body>
 </html>
+
 
 
