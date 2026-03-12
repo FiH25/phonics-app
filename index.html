@@ -489,6 +489,88 @@
 "ph": ["phone","photo","dolphin","graph","elephant","alphabet"]
 
 };
+    const SOUND_GROUPS = {
+  "s": "s-sound",
+  "a": "a-sound",
+  "t": "t-sound",
+  "p": "p-sound",
+  "i": "i-sound",
+  "n": "n-sound",
+  "m": "m-sound",
+  "d": "d-sound",
+  "g": "g-sound",
+  "o": "o-sound",
+
+  "c": "k-sound",
+  "k": "k-sound",
+  "ck": "k-sound",
+
+  "e": "e-sound",
+  "u": "u-sound",
+  "r": "r-sound",
+  "h": "h-sound",
+  "b": "b-sound",
+
+  "f": "f-sound",
+  "ff": "f-sound",
+  "ph": "f-sound",
+
+  "l": "l-sound",
+  "ll": "l-sound",
+
+  "ss": "s-sound",
+
+  "j": "j-sound",
+  "v": "v-sound",
+
+  "w": "w-sound",
+  "wh": "w-sound",
+
+  "x": "x-sound",
+  "y": "y-sound",
+
+  "z": "z-sound",
+  "zz": "z-sound",
+
+  "qu": "qu-sound",
+
+  "ch": "ch-sound",
+  "sh": "sh-sound",
+  "th": "th-sound",
+  "ng": "ng-sound",
+
+  "ai": "ai-sound",
+  "ay": "ay-sound",
+
+  "ee": "ee-sound",
+  "ea": "ee-sound",
+
+  "igh": "igh-sound",
+  "ie": "igh-sound",
+
+  "oa": "oa-sound",
+  "ow": "ow-sound",
+  "ou": "ou-sound",
+
+  "oo": "oo-short-sound",
+  "ue": "ue-sound",
+
+  "ar": "ar-sound",
+
+  "or": "or-sound",
+  "aw": "or-sound",
+
+  "ur": "er-sound",
+  "er": "er-sound",
+  "ir": "er-sound",
+
+  "oi": "oi-sound",
+  "oy": "oi-sound",
+
+  "ear": "ear-sound",
+  "air": "air-sound",
+  "ure": "ure-sound"
+};
     const TRICKY_DATA = {
       "i": { label: "I", audio: "i_word", distractors: ["is", "in", "it", "if", "my", "go"] },
       "no": { label: "no", audio: "no", distractors: ["go", "to", "so", "on", "not", "he"] },
@@ -731,11 +813,10 @@ function handleTileTap(button, word, grapheme) {
         const soundWords = SOUND_DATA[answerSound];
         correctWord = soundWords[Math.floor(Math.random() * soundWords.length)];
 
-        const wrongSounds = shuffle(soundKeys.filter(s => s !== answerSound)).slice(0, 2);
-        const wrongWords = wrongSounds.map(sound => {
-          const options = SOUND_DATA[sound];
-          return options[Math.floor(Math.random() * options.length)];
-        });
+      const answerGroup = SOUND_GROUPS[answerSound] || answerSound;
+      const wrongSounds = shuffle(
+      soundKeys.filter(s => s !== answerSound && (SOUND_GROUPS[s] || s) !== answerGroup)
+      ).slice(0, 2);
 
         const choices = shuffle([correctWord, ...wrongWords]);
 
@@ -879,6 +960,7 @@ function handleTileTap(button, word, grapheme) {
   </script>
 </body>
 </html>
+
 
 
 
