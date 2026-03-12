@@ -421,10 +421,10 @@
       </div>
 
       <div class="stage-bar">
-        <div id="stageListen" class="stage active">👂 Listen</div>
-        <div id="stageChoose" class="stage">❓ Choose</div>
-        <div id="stageTap" class="stage">👉 Tap</div>
-      </div>
+      <div id="stageListen" class="stage active">👂 Listen</div>
+      <div id="stageChoose" class="stage">❓ Choose</div>
+      <div id="stageTap" class="stage">🔎 Find</div>
+    </div>
 
       <div class="play-row">
         <button id="soundModeBtn" class="mode-btn active" onclick="setMode('sound')">Sound mode</button>
@@ -441,7 +441,7 @@
       <div class="grid" id="options"></div>
 
       <div id="tileStage" class="tile-stage hidden">
-        <div id="tilePrompt" class="tile-prompt">Can you tap the sound in the word?</div>
+        <div id="tilePrompt" class="tile-prompt">🔎 Can you find the sound in the word?</div>
         <div id="tileRow" class="tile-row"></div>
       </div>
 
@@ -741,6 +741,15 @@
       return shuffle(filtered).slice(0, count);
     }
 
+    function wordContainsAnyGrapheme(word, graphemes) {
+      const lowerWord = word.toLowerCase();
+    return graphemes.some(g => lowerWord.includes(g.toLowerCase()));
+    }
+
+    function getGroupMembers(targetSound) {
+  const targetGroup = SOUND_GROUPS[targetSound] || targetSound;
+  return soundKeys.filter(s => (SOUND_GROUPS[s] || s) === targetGroup);
+}
     function splitWordIntoTiles(word, grapheme) {
       const lowerWord = word.toLowerCase();
       const lowerGrapheme = grapheme.toLowerCase();
@@ -789,7 +798,7 @@
       tileCorrectPart = grapheme.toLowerCase();
       awaitingTileTap = true;
 
-      tilePrompt.innerText = `Great! Now tap "${grapheme}" in "${word}".`;
+      tilePrompt.innerText = `🔎 Great! Can you find "${grapheme}" in "${word}"?`;
 
       parts.forEach(part => {
         const btn = document.createElement("button");
@@ -859,15 +868,26 @@
         const soundWords = SOUND_DATA[answerSound];
         correctWord = soundWords[Math.floor(Math.random() * soundWords.length)];
 
-        const answerGroup = SOUND_GROUPS[answerSound] || answerSound;
-        const wrongSounds = shuffle(
-          soundKeys.filter(s => s !== answerSound && (SOUND_GROUPS[s] || s) !== answerGroup)
-        ).slice(0, 2);
+        const groupMembers = getGroupMembers(answerSound);
 
-        const wrongWords = wrongSounds.map(sound => {
-          const options = SOUND_DATA[sound];
-          return options[Math.floor(Math.random() * options.length)];
-        });
+        const safeWrongSounds = shuffle(
+        soundKeys.filter(s => !groupMembers.includes(s))
+      );
+      
+      const wrongWords = [];
+      
+      for (const sound of safeWrongSounds) {
+        const safeOptions = SOUND_DATA[sound].filter(word =>
+          !wordContainsAnyGrapheme(word, groupMembers)
+        );
+      
+        if (safeOptions.length > 0) {
+          const chosenWord = safeOptions[Math.floor(Math.random() * safeOptions.length)];
+          wrongWords.push(chosenWord);
+        }
+      
+        if (wrongWords.length === 2) break;
+      }
 
         const choices = shuffle([correctWord, ...wrongWords]);
 
@@ -1013,3 +1033,4 @@
   </script>
 </body>
 </html>
+
